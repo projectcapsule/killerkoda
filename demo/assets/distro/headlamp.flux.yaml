@@ -11,6 +11,7 @@ spec:
   serviceAccountName: kustomize-controller
   dependsOn:
     - name: capsule
+    - name: dex
   chart:
     spec:
       chart: headlamp
@@ -138,10 +139,13 @@ spec:
     config:
         pluginsDir: /build/plugins
         inCluster: true
+        extraArgs:
+          - -oidc-ca-file=/etc/ssl/certs/ca-certificates.crt
         oidc:
           clientID: kubernetes 
           clientSecret: kubernetes-secret 
           issuerURL: "${DEX_URL}"
+          callbackURL: "${HEADLAMP_URL}/oidc-callback"
           scopes: "email,profile,groups"
 ---
 apiVersion: source.toolkit.fluxcd.io/v1
