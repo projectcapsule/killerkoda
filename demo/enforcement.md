@@ -8,14 +8,15 @@
   <a href="{{TRAFFIC_HOST1_30444}}"><img src="https://headlamp.dev/img/favicon.png" alt="" width="20" height="20"> Headlamp</a> ·
   <a href="{{TRAFFIC_HOST1_32556}}"><img src="https://dexidp.io/favicons/favicon-96x96.png" alt="" width="20" height="20"> Dex</a>
 </p>
-<p>
-  <strong>Dex username / password:</strong>
-  <code>alice / alice</code> ·
-  <code>bob / bob</code> ·
-  <code>gatsby / gatsby</code> ·
-  <code>renewable / renewable</code> ·
-  <code>admin / admin</code>
-</p>
+
+**Dex login / password:**
+
+- `alice@projectcapsule.dev`{{copy}} / `alice`{{copy}}
+- `bob@projectcapsule.dev`{{copy}} / `bob`{{copy}}
+- `gatsby@projectcapsule.dev`{{copy}} / `gatsby`{{copy}}
+- `renewable@projectcapsule.dev`{{copy}} / `renewable`{{copy}}
+- `admin@projectcapsule.dev`{{copy}} / `admin`{{copy}}
+
 </details>
 
 # Enforcement

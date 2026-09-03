@@ -15,12 +15,13 @@ You can also open any exposed port from KillerCoda's **Traffic / Ports** menu:
 
 ## Dex users
 
-The password for each demo user is the same as its username.
+Sign in with the user's email address. The password is the part before
+`@projectcapsule.dev`.
 
-| Username | Password | Groups |
+| Login | Password | Groups |
 | --- | --- | --- |
-| `alice` | `alice` | `capsule-users`, `solar-users` |
-| `bob` | `bob` | `capsule-users`, `green-users` |
-| `gatsby` | `gatsby` | `capsule-users`, `wind-users` |
-| `renewable` | `renewable` | `capsule-users`, `renewable-users` |
-| `admin` | `admin` | `capsule-admins` |
+| `alice@projectcapsule.dev`{{copy}} | `alice`{{copy}} | `capsule-users`, `solar-users` |
+| `bob@projectcapsule.dev`{{copy}} | `bob`{{copy}} | `capsule-users`, `green-users` |
+| `gatsby@projectcapsule.dev`{{copy}} | `gatsby`{{copy}} | `capsule-users`, `wind-users` |
+| `renewable@projectcapsule.dev`{{copy}} | `renewable`{{copy}} | `capsule-users`, `renewable-users` |
+| `admin@projectcapsule.dev`{{copy}} | `admin`{{copy}} | `capsule-admins` |

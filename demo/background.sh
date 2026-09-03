@@ -10,46 +10,7 @@ export PROXY_URL="$(sed 's/PORT/30443/g' /etc/killercoda/host)"
 export HEADLAMP_URL="$(sed 's/PORT/30444/g' /etc/killercoda/host)"
 export DEX_URL="$(sed 's/PORT/32556/g' /etc/killercoda/host)"
 
-OIDC_AUTH_CONFIG=/etc/kubernetes/pki/demo-authentication-config.yaml
 APISERVER_MANIFEST=/etc/kubernetes/manifests/kube-apiserver.yaml
-
-wait_for_authentication_config() {
-  local expected_hash="$1"
-  local failure_message="$2"
-
-  for attempt in $(seq 1 120); do
-    if kubectl get --raw=/metrics 2>/dev/null \
-      | grep -E "^apiserver_authentication_config_controller_last_config_info\\{[^}]*hash=\"sha256:${expected_hash}\"[^}]*\\} 1$" \
-        >/dev/null; then
-      return 0
-    fi
-    sleep 1
-  done
-
-  echo "${failure_message}" >&2
-  return 1
-}
-
-# Start the API server with an empty, reloadable JWT configuration. Dex is not
-# available yet, so configuring the issuer directly during bootstrap would
-# create a dependency cycle between the API server and Dex.
-oidc_auth_tmp="$(mktemp "${OIDC_AUTH_CONFIG}.XXXXXX")"
-cat > "${oidc_auth_tmp}" <<'EOF'
-apiVersion: apiserver.config.k8s.io/v1
-kind: AuthenticationConfiguration
-jwt: []
-EOF
-chmod 0600 "${oidc_auth_tmp}"
-mv "${oidc_auth_tmp}" "${OIDC_AUTH_CONFIG}"
-
-if ! grep -Fq -- "--authentication-config=${OIDC_AUTH_CONFIG}" "${APISERVER_MANIFEST}"; then
-  sed -i "/^[[:space:]]*- kube-apiserver$/a\\    - --authentication-config=${OIDC_AUTH_CONFIG}" "${APISERVER_MANIFEST}"
-fi
-
-initial_auth_hash="$(sha256sum "${OIDC_AUTH_CONFIG}" | awk '{print $1}')"
-wait_for_authentication_config \
-  "${initial_auth_hash}" \
-  "API server did not start with the reloadable authentication configuration"
 
 # Install Flux
 kubectl kustomize /root/.assets/flux/ | kubectl apply -f -
@@ -83,32 +44,71 @@ for attempt in $(seq 1 120); do
   sleep 2
 done
 
-# Atomically enable Dex authentication. The API server automatically reloads
-# this file without restarting.
-oidc_auth_tmp="$(mktemp "${OIDC_AUTH_CONFIG}.XXXXXX")"
-cat > "${oidc_auth_tmp}" <<EOF
-apiVersion: apiserver.config.k8s.io/v1
-kind: AuthenticationConfiguration
-jwt:
-  - issuer:
-      url: "${DEX_URL}"
-      audiences:
-        - kubernetes
-    claimMappings:
-      username:
-        claim: name
-        prefix: ""
-      groups:
-        claim: groups
-        prefix: ""
-EOF
-chmod 0600 "${oidc_auth_tmp}"
-mv "${oidc_auth_tmp}" "${OIDC_AUTH_CONFIG}"
+# Add the OIDC flags directly to the kubeadm-managed static Pod manifest. Dex
+# is already ready, so the restarted API server can discover the issuer while
+# starting. Kustomize avoids relying on the manifest's line ordering.
+if grep -Fq -- "--authentication-config=" "${APISERVER_MANIFEST}"; then
+  echo "Cannot combine kube-apiserver OIDC flags with --authentication-config" >&2
+  exit 1
+fi
 
-expected_auth_hash="$(sha256sum "${OIDC_AUTH_CONFIG}" | awk '{print $1}')"
-wait_for_authentication_config \
-  "${expected_auth_hash}" \
-  "API server did not load the Dex authentication configuration"
+previous_apiserver_uid="$(kubectl get pod \
+  --namespace kube-system \
+  --selector component=kube-apiserver \
+  --output jsonpath='{.items[0].metadata.uid}')"
+
+apiserver_patch_dir="$(mktemp -d)"
+cp "${APISERVER_MANIFEST}" "${apiserver_patch_dir}/kube-apiserver.yaml"
+envsubst '${DEX_URL}' \
+  < /root/.assets/apiserver/kustomization.yaml.tpl \
+  > "${apiserver_patch_dir}/kustomization.yaml"
+
+rendered_apiserver_manifest="$(mktemp /etc/kubernetes/manifests/.kube-apiserver.yaml.XXXXXX)"
+kubectl kustomize "${apiserver_patch_dir}" > "${rendered_apiserver_manifest}"
+
+required_oidc_flags=(
+  "--oidc-issuer-url=${DEX_URL}"
+  "--oidc-client-id=kubernetes"
+  "--oidc-username-claim=name"
+  "--oidc-username-prefix=-"
+  "--oidc-groups-claim=groups"
+  "--oidc-groups-prefix="
+)
+for required_oidc_flag in "${required_oidc_flags[@]}"; do
+  if ! grep -Fq -- "${required_oidc_flag}" "${rendered_apiserver_manifest}"; then
+    echo "Rendered API-server manifest is missing ${required_oidc_flag}" >&2
+    exit 1
+  fi
+done
+
+chmod --reference="${APISERVER_MANIFEST}" "${rendered_apiserver_manifest}"
+chown --reference="${APISERVER_MANIFEST}" "${rendered_apiserver_manifest}"
+mv "${rendered_apiserver_manifest}" "${APISERVER_MANIFEST}"
+rm -r "${apiserver_patch_dir}"
+
+for attempt in $(seq 1 180); do
+  current_apiserver_uid="$(kubectl get pod \
+    --namespace kube-system \
+    --selector component=kube-apiserver \
+    --output jsonpath='{.items[0].metadata.uid}' \
+    2>/dev/null || true)"
+  current_apiserver_command="$(kubectl get pod \
+    --namespace kube-system \
+    --selector component=kube-apiserver \
+    --output jsonpath='{.items[0].spec.containers[0].command}' \
+    2>/dev/null || true)"
+  if [ -n "${current_apiserver_uid}" ] \
+    && [ "${current_apiserver_uid}" != "${previous_apiserver_uid}" ] \
+    && [[ "${current_apiserver_command}" == *"--oidc-issuer-url=${DEX_URL}"* ]] \
+    && kubectl get --raw=/readyz >/dev/null 2>&1; then
+    break
+  fi
+  if [ "${attempt}" -eq 180 ]; then
+    echo "API server did not restart successfully with Dex OIDC enabled" >&2
+    exit 1
+  fi
+  sleep 1
+done
 
 # Verify the complete distribution only after OIDC is active. In particular,
 # Headlamp depends on Dex and must not be exposed as ready before login works.
