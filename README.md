@@ -1,2 +1,3 @@
-# demo
-Killerkoda demo repository
+# Killekoda
+
+Killerkoda scenario repository
