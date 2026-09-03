@@ -42,6 +42,46 @@ trap 'setup_exited "$?"' EXIT
 
 echo starting...
 
+export KREW_ROOT=/root/.krew
+export PATH="${KREW_ROOT}/bin:${PATH}"
+
+# Install Krew before any kubectl plugins. Publishing the two commands in
+# /usr/local/bin also makes them available in terminal sessions that were
+# opened before this background script updated root's shell configuration.
+if [ ! -x "${KREW_ROOT}/bin/kubectl-krew" ]; then
+  krew_install_dir="$(mktemp -d)"
+  krew_os="$(uname | tr '[:upper:]' '[:lower:]')"
+  krew_arch="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')"
+  krew_archive="krew-${krew_os}_${krew_arch}"
+
+  curl --fail --silent --show-error --location \
+    --output "${krew_install_dir}/${krew_archive}.tar.gz" \
+    "https://github.com/kubernetes-sigs/krew/releases/latest/download/${krew_archive}.tar.gz"
+  tar --extract --gzip \
+    --file "${krew_install_dir}/${krew_archive}.tar.gz" \
+    --directory "${krew_install_dir}"
+  "${krew_install_dir}/${krew_archive}" install krew
+  rm -r "${krew_install_dir}"
+fi
+
+krew_path_line='export PATH="/root/.krew/bin:$PATH"'
+if ! grep -Fqx "${krew_path_line}" /root/.bashrc; then
+  printf '\n%s\n' "${krew_path_line}" >> /root/.bashrc
+fi
+
+if [ ! -e /usr/local/bin/kubectl-krew ] && [ ! -L /usr/local/bin/kubectl-krew ]; then
+  ln -s "${KREW_ROOT}/bin/kubectl-krew" /usr/local/bin/kubectl-krew
+fi
+
+if ! kubectl krew list | grep -Fxq oidc-login; then
+  kubectl krew install oidc-login
+fi
+
+if [ ! -e /usr/local/bin/kubectl-oidc_login ] && [ ! -L /usr/local/bin/kubectl-oidc_login ]; then
+  ln -s "${KREW_ROOT}/bin/kubectl-oidc_login" /usr/local/bin/kubectl-oidc_login
+fi
+kubectl oidc-login --help >/dev/null
+
 export GANGPLANK_URL="$(sed 's/PORT/30442/g' /etc/killercoda/host)"
 export PROXY_URL="$(sed 's/PORT/30443/g' /etc/killercoda/host)"
 export HEADLAMP_URL="$(sed 's/PORT/30444/g' /etc/killercoda/host)"
@@ -56,9 +96,6 @@ kubectl kustomize /root/.assets/flux/ | kubectl apply -f -
 kubectl kustomize /root/.assets/distro/ \
   | envsubst '${PROXY_URL} ${HEADLAMP_URL} ${GANGPLANK_URL} ${DEX_URL}' \
   | kubectl apply -f -
-
-# Install Plugins
-kubectl krew install oidc-login
 
 # Install Flux
 curl -s https://fluxcd.io/install.sh | sudo bash
