@@ -1,7 +1,44 @@
 #!/bin/bash
 set -Eeuo pipefail
+
+SETUP_LOG=/tmp/scenario-setup.log
+SETUP_ERROR=/tmp/scenario-setup-error.log
+
+: > "${SETUP_LOG}"
+rm -f "${SETUP_ERROR}" /tmp/failed
+exec > >(tee -a "${SETUP_LOG}") 2>&1
+
+setup_failed() {
+  local status="$1"
+  local line="$2"
+  local command="$3"
+
+  trap - ERR
+  {
+    echo "Scenario setup failed with exit code ${status}."
+    echo "Line ${line}: ${command}"
+  } > "${SETUP_ERROR}"
+  cat "${SETUP_ERROR}" >&2
+  touch /tmp/failed
+  exit "${status}"
+}
+
+fail_setup() {
+  setup_failed 1 "${BASH_LINENO[0]}" "$1"
+}
+
+setup_exited() {
+  local status="$1"
+
+  if [ "${status}" -ne 0 ] && [ ! -f /tmp/failed ]; then
+    echo "Scenario setup exited unexpectedly with status ${status}." > "${SETUP_ERROR}"
+    touch /tmp/failed
+  fi
+}
+
 set -x
-trap 'touch /tmp/failed' ERR
+trap 'setup_failed "$?" "$LINENO" "$BASH_COMMAND"' ERR
+trap 'setup_exited "$?"' EXIT
 
 echo starting...
 
@@ -38,8 +75,7 @@ for attempt in $(seq 1 120); do
     fi
   fi
   if [ "${attempt}" -eq 120 ]; then
-    echo "Dex discovery did not advertise the expected issuer ${DEX_URL}" >&2
-    exit 1
+    fail_setup "Dex discovery did not advertise the expected issuer ${DEX_URL}"
   fi
   sleep 2
 done
@@ -48,8 +84,7 @@ done
 # is already ready, so the restarted API server can discover the issuer while
 # starting. Kustomize avoids relying on the manifest's line ordering.
 if grep -Fq -- "--authentication-config=" "${APISERVER_MANIFEST}"; then
-  echo "Cannot combine kube-apiserver OIDC flags with --authentication-config" >&2
-  exit 1
+  fail_setup "Cannot combine kube-apiserver OIDC flags with --authentication-config"
 fi
 
 previous_apiserver_uid="$(kubectl get pod \
@@ -76,8 +111,7 @@ required_oidc_flags=(
 )
 for required_oidc_flag in "${required_oidc_flags[@]}"; do
   if ! grep -Fq -- "${required_oidc_flag}" "${rendered_apiserver_manifest}"; then
-    echo "Rendered API-server manifest is missing ${required_oidc_flag}" >&2
-    exit 1
+    fail_setup "Rendered API-server manifest is missing ${required_oidc_flag}"
   fi
 done
 
@@ -104,8 +138,7 @@ for attempt in $(seq 1 180); do
     break
   fi
   if [ "${attempt}" -eq 180 ]; then
-    echo "API server did not restart successfully with Dex OIDC enabled" >&2
-    exit 1
+    fail_setup "API server did not restart successfully with Dex OIDC enabled"
   fi
   sleep 1
 done
