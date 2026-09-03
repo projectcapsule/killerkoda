@@ -9,6 +9,10 @@
       },
       "steps": [
         {
+          "title": "Environment",
+          "text": "environment.md"
+        },
+        {
           "title": "Capsule",
           "text": "main.md" 
         },
