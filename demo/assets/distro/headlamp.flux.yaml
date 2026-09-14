@@ -81,24 +81,6 @@ spec:
                       fieldPath: metadata.namespace
                     path: namespace
     initContainers:
-      - name: capsule-plugin
-        command:
-          - /bin/sh
-          - -c
-          - cp -r /plugins/* /build/plugins/
-        image: ghcr.io/buttahtoast/headlamp-plugins/capsule:0.1.0-beta1
-        volumeMounts:
-          - mountPath: /build/plugins
-            name: headlamp-plugins
-        securityContext:
-          capabilities:
-              drop:
-                  - ALL
-          readOnlyRootFilesystem: true
-          allowPrivilegeEscalation: false
-          privileged: false
-          runAsUser: 65534
-          runAsGroup: 65534
       - name: add-ca
         image: docker.io/alpine:3
         command:
@@ -136,6 +118,16 @@ spec:
         privileged: false
         runAsUser: 100
         runAsGroup: 101
+    pluginsManager:
+      enabled: true
+      configContent: |
+        plugins:
+          - name: capsule
+            source: https://artifacthub.io/packages/headlamp/headlamp-capsule/capsule
+            version: 0.2.1
+        installOptions:
+          parallel: true
+          maxConcurrent: 2
     config:
         pluginsDir: /build/plugins
         inCluster: true
