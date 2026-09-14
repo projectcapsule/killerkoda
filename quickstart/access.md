@@ -29,9 +29,11 @@ Open [Headlamp]({{TRAFFIC_HOST1_30444}}) and sign in through Dex using:
 - Email: `alice@projectcapsule.dev`{{copy}}
 - Password: `alice`{{copy}}
 
-The API server reads Dex's `name` claim as `alice`, matching the TenantOwner you created. Headlamp sends requests through Capsule Proxy, so you can explore the Solar namespaces and the replicated `app-config` ConfigMap using Alice's permissions.
+The API server reads Dex's `name` claim as `alice`, matching the TenantOwner you created. Headlamp sends requests through Capsule Proxy, so you can explore both Solar namespaces, `lunar-development`, and the replicated `app-config` ConfigMap using Alice's permissions.
 
-The Environment chapter lists the other demo accounts. Only Alice has been assigned ownership in this walkthrough; creating more users in an identity provider does not itself give them access to a Tenant.
+Sign out and sign in as `bob@projectcapsule.dev` / `bob`. Bob's production RoleBinding gives him a view of `solar-production`, including its ConfigMaps, while excluding Secrets and writes. His Dex groups do not include the synthetic `solar:operators` group from the permissions exercise.
+
+The Environment chapter lists the other demo accounts. Creating an identity-provider account does not itself grant Tenant access; the ownership and RoleBindings from this walkthrough determine each view.
 
 ## Download an OIDC kubeconfig
 

@@ -20,15 +20,17 @@
 
 # Continue exploring Capsule
 
-You created a Tenant and TenantOwner, enforced namespace names and labels, checked quotas, and listed resources through Capsule Proxy. The later chapters added workload and security rules, environment-specific permissions, automatic resource distribution, and a resource pool.
+You created Tenants and TenantOwners, enforced namespace names and labels, checked quotas, and listed resources through Capsule Proxy. The later chapters added workload priority, security rules, environment-specific permissions, ConfigMap and registry-secret distribution, and a resource pool. You also compared group ownership, access across tenants, and Bob's production observer permissions.
 
-Continue experimenting with the two Solar namespaces. The pool requires a new ResourcePoolClaim before you deploy more Pods.
+Continue experimenting with the two Solar namespaces and the minimal Lunar Tenant. Solar's pool requires a new ResourcePoolClaim before you deploy more Pods there. The ProxySetting, GlobalProxySettings, and Bob's RoleBinding remain available for further exploration.
 
 Useful next steps:
 
 - [Quickstart and Going Further](https://projectcapsule.dev/docs/quickstart/)
 - [Rules](https://projectcapsule.dev/docs/rules/)
 - [Tenant permissions](https://projectcapsule.dev/docs/tenants/permissions/)
+- [Proxy settings](https://projectcapsule.dev/docs/proxy/proxysettings/)
+- [RoleBinding reflection](https://projectcapsule.dev/docs/proxy/reflection/)
 - [Resource Pools](https://projectcapsule.dev/docs/resource-management/resourcepools/)
 - [Custom Quotas](https://projectcapsule.dev/docs/resource-management/customquotas/)
 - [Capsule source and community](https://github.com/projectcapsule/capsule)

@@ -29,7 +29,7 @@ kubectl-alice get namespaces
 [Capsule Proxy](https://projectcapsule.dev/docs/proxy/) provides the filtered view. As administrator, create a certificate and kubeconfig for Alice:
 
 ```shell
-bash /root/capsule-quickstart/scripts/create-alice-kubeconfig.sh
+bash /root/capsule-quickstart/scripts/create-user-kubeconfig.sh alice
 alias kubectl-alice-proxy='kubectl --kubeconfig /root/capsule-quickstart/alice.kubeconfig'
 ```{{exec}}
 

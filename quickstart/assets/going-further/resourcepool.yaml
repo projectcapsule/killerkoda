@@ -2,6 +2,8 @@ apiVersion: capsule.clastix.io/v1beta2
 kind: ResourcePool
 metadata:
   name: solar
+  labels:
+    projectcapsule.dev/tenant: solar
 spec:
   config:
     defaultsZero: true

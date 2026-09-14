@@ -1,0 +1,16 @@
+apiVersion: capsule.clastix.io/v1beta1
+kind: GlobalProxySettings
+metadata:
+  name: solar-resource-pools
+spec:
+  rules:
+    - subjects:
+        - kind: User
+          name: alice
+      clusterResources:
+        - apiGroups: [capsule.clastix.io]
+          resources: [resourcepools]
+          operations: [List, Get]
+          selector:
+            matchLabels:
+              projectcapsule.dev/tenant: solar

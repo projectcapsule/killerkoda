@@ -9,8 +9,9 @@ wait_revision() {
   kubectl wait "$@" --for=condition=Ready --timeout=120s
 }
 
-wait_revision tenant/solar
-namespaces="$(kubectl get namespaces -l capsule.clastix.io/tenant=solar -o jsonpath='{.items[*].metadata.name}')"
+tenant_name="${1:-solar}"
+wait_revision "tenant/${tenant_name}"
+namespaces="$(kubectl get namespaces -l "capsule.clastix.io/tenant=${tenant_name}" -o jsonpath='{.items[*].metadata.name}')"
 for namespace in ${namespaces}; do
   kubectl wait --for=create rulestatus/capsule-managed-rules -n "${namespace}" --timeout=120s
   wait_revision rulestatus/capsule-managed-rules -n "${namespace}"

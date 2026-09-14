@@ -24,7 +24,7 @@ A [TenantResource](https://projectcapsule.dev/docs/replications/tenant/) is name
 
 ## Give replication its own identity
 
-This release defaults tenant replication to a ServiceAccount. Alice creates a dedicated account and grants it ConfigMap permissions in both namespaces:
+This release defaults tenant replication to a ServiceAccount. Alice creates a dedicated account and grants it ConfigMap and Secret permissions in both namespaces:
 
 ```shell
 cat /root/capsule-quickstart/going-further/replication-rbac.yaml
@@ -62,4 +62,21 @@ kubectl-alice patch configmap app-config -n solar-development --type=merge -p '{
 kubectl-alice wait --for=jsonpath='{.data.message}'=updated-by-alice configmap/app-config -n solar-production --timeout=120s
 ```{{exec}}
 
-The demo uses a short `resyncPeriod: 10s` for this exercise. In a real platform, the same mechanism can distribute application settings or registry credentials within a tenant. Leave this ConfigMap in place to find it through Headlamp later.
+The demo uses a short `resyncPeriod: 10s` for this exercise. Leave this ConfigMap in place to find it through Headlamp later.
+
+## Distribute registry credentials
+
+The same mechanism can distribute an image pull Secret. This example contains dummy credentials for `registry.example.com`; it does not contact a registry:
+
+```shell
+cat /root/capsule-quickstart/going-further/pullsecret.yaml
+kubectl-alice apply -f /root/capsule-quickstart/going-further/pullsecret.yaml
+cat /root/capsule-quickstart/going-further/pullsecret-replication.yaml
+kubectl-alice apply -f /root/capsule-quickstart/going-further/pullsecret-replication.yaml
+kubectl-alice wait --for=condition=Ready tenantresource/solar-registry-credentials -n solar-development --timeout=120s
+kubectl-alice get secret registry-credentials -n solar-production -o jsonpath='{.type}{"\n"}'
+```{{exec}}
+
+Expect `kubernetes.io/dockerconfigjson`. Both replications use the dedicated ServiceAccount; its RoleBindings include the permissions for each resource type. Keep the source Secret in the development namespace and update it there when rotating credentials.
+
+Replication makes the Secret available in production. A workload would also need to reference it in `spec.imagePullSecrets` to use those credentials for an image pull.

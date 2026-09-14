@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lunar-development
+  labels:
+    capsule.clastix.io/tenant: lunar
+    environment: dev

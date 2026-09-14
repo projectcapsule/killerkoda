@@ -1,0 +1,16 @@
+apiVersion: capsule.clastix.io/v1beta1
+kind: ProxySetting
+metadata:
+  name: solar-priority-classes
+  namespace: solar-production
+spec:
+  subjects:
+    - kind: User
+      name: alice
+      clusterResources:
+        - apiGroups: [scheduling.k8s.io]
+          resources: [priorityclasses]
+          operations: [List, Get]
+          selector:
+            matchLabels:
+              consumer: customer

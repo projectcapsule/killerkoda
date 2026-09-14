@@ -1,0 +1,11 @@
+apiVersion: capsule.clastix.io/v1beta2
+kind: Tenant
+metadata:
+  name: lunar
+spec:
+  owners:
+    - kind: User
+      name: alice
+  namespaceOptions:
+    quota: 1
+  forceTenantPrefix: true
