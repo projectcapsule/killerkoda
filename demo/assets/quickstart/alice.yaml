@@ -1,0 +1,9 @@
+apiVersion: capsule.clastix.io/v1beta2
+kind: TenantOwner
+metadata:
+  name: alice
+  labels:
+    projectcapsule.dev/tenant: solar
+spec:
+  kind: User
+  name: alice

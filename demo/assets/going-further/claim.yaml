@@ -1,0 +1,12 @@
+apiVersion: capsule.clastix.io/v1beta2
+kind: ResourcePoolClaim
+metadata:
+  name: production-budget
+  namespace: solar-production
+spec:
+  pool: solar
+  claim:
+    requests.cpu: 256m
+    requests.memory: 512Mi
+    limits.cpu: 256m
+    limits.memory: 512Mi

@@ -1,0 +1,26 @@
+- op: add
+  path: /spec/rules/-
+  value:
+    namespaceSelector:
+      matchExpressions:
+        - key: environment
+          operator: NotIn
+          values: [prod]
+    permissions:
+      bindings:
+        - clusterRoleName: edit
+          subjects:
+            - kind: Group
+              name: solar:operators
+- op: add
+  path: /spec/rules/-
+  value:
+    namespaceSelector:
+      matchLabels:
+        environment: prod
+    permissions:
+      bindings:
+        - clusterRoleName: view
+          subjects:
+            - kind: Group
+              name: solar:operators

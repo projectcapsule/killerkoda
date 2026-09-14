@@ -1,0 +1,12 @@
+- op: add
+  path: /spec/rules/-
+  value:
+    enforce:
+      action: allow
+      services:
+        types:
+          - ClusterIP
+          - ExternalName
+        externalNames:
+          hostnames:
+            - exp: '^.*\.solar\.svc\.company\.com$'

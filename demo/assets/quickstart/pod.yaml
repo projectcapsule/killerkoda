@@ -1,0 +1,20 @@
+# Namespace is supplied by the command, so the same Pod can test both environments.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: hello
+      image: busybox:1.37.0
+      command: ["sh", "-c", "sleep 3600"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+  restartPolicy: Never

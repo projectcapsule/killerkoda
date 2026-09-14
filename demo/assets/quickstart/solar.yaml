@@ -1,0 +1,50 @@
+# https://projectcapsule.dev/docs/quickstart/
+apiVersion: capsule.clastix.io/v1beta2
+kind: Tenant
+metadata:
+  name: solar
+spec:
+  owners:
+    - name: alice
+      kind: User
+  namespaceOptions:
+    quota: 2
+  forceTenantPrefix: true
+  rules:
+    - enforce:
+        action: allow
+        metadata:
+          - apiGroups:
+              - v1
+            kinds:
+              - Namespace
+            labels:
+              environment:
+                required: true
+                default: dev
+                values:
+                  - exact:
+                      - dev
+                      - test
+                      - prod
+    - namespaceSelector:
+        matchLabels:
+          environment: prod
+      enforce:
+        action: allow
+        workloads:
+          qosClasses:
+            - Guaranteed
+    - namespaceSelector:
+        matchExpressions:
+          - key: environment
+            operator: NotIn
+            values:
+              - prod
+      enforce:
+        action: allow
+        workloads:
+          qosClasses:
+            - BestEffort
+            - Burstable
+            - Guaranteed

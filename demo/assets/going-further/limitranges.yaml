@@ -1,0 +1,57 @@
+apiVersion: capsule.clastix.io/v1beta2
+kind: GlobalTenantResource
+metadata:
+  name: limitranges
+spec:
+  resyncPeriod: 60s
+  resources:
+    - namespaceSelector:
+        matchLabels:
+          capsule.clastix.io/tenant: solar
+          environment: dev
+      rawItems:
+        - apiVersion: v1
+          kind: LimitRange
+          metadata:
+            name: service-level-bronze
+          spec:
+            limits:
+              - type: Container
+                # Keep dev free of defaults while giving this entry a constraint.
+                min:
+                  memory: 16Mi
+    - namespaceSelector:
+        matchLabels:
+          capsule.clastix.io/tenant: solar
+          environment: test
+      rawItems:
+        - apiVersion: v1
+          kind: LimitRange
+          metadata:
+            name: service-level-silver
+          spec:
+            limits:
+              - type: Container
+                default:
+                  memory: 256Mi
+                defaultRequest:
+                  cpu: 128m
+                  memory: 256Mi
+    - namespaceSelector:
+        matchLabels:
+          capsule.clastix.io/tenant: solar
+          environment: prod
+      rawItems:
+        - apiVersion: v1
+          kind: LimitRange
+          metadata:
+            name: service-level-gold
+          spec:
+            limits:
+              - type: Container
+                default:
+                  cpu: 128m
+                  memory: 256Mi
+                defaultRequest:
+                  cpu: 128m
+                  memory: 256Mi

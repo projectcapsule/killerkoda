@@ -1,0 +1,34 @@
+- op: add
+  path: /spec/rules/-
+  value:
+    namespaceSelector:
+      matchExpressions:
+        - key: environment
+          operator: NotIn
+          values: [prod]
+    enforce:
+      action: allow
+      metadata:
+        - apiGroups: [v1]
+          kinds: [Namespace]
+          labels:
+            pod-security.kubernetes.io/enforce:
+              required: true
+              default: restricted
+              values:
+                - exact: [restricted, baseline]
+- op: add
+  path: /spec/rules/-
+  value:
+    namespaceSelector:
+      matchLabels:
+        environment: prod
+    enforce:
+      action: allow
+      metadata:
+        - apiGroups: [v1]
+          kinds: [Namespace]
+          labels:
+            pod-security.kubernetes.io/enforce:
+              required: true
+              managed: restricted

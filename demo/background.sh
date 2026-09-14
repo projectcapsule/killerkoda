@@ -5,7 +5,7 @@ SETUP_LOG=/tmp/scenario-setup.log
 SETUP_ERROR=/tmp/scenario-setup-error.log
 
 : > "${SETUP_LOG}"
-rm -f "${SETUP_ERROR}" /tmp/failed
+rm -f "${SETUP_ERROR}" /tmp/failed /tmp/finished
 exec > >(tee -a "${SETUP_LOG}") 2>&1
 
 setup_failed() {
@@ -184,31 +184,17 @@ done
 # Headlamp depends on Dex and must not be exposed as ready before login works.
 kubectl wait --namespace flux-system --for=condition=ready helmrelease --all --timeout=15m
 
-# Apply Objects (Playground)
-git clone https://github.com/projectcapsule/capsule.git /root/.assets/objects
-cd /root/.assets/objects/playground
-make apply-platform
-make apply-user
+# Keep the initial cluster empty of demo Tenants. Learners apply the checked-in
+# quickstart and then extend it chapter by chapter.
+mkdir -p /root/capsule-demo
+cp -R /root/.assets/quickstart /root/.assets/going-further /root/.assets/scripts /root/capsule-demo/
 
-# Create Kubeconfigs
-kubectl get secret capsule-proxy -n capsule-system -o jsonpath='{.data.ca\.crt}'
-
-export ROOT_CA=$(kubectl get secret capsule-proxy -n capsule-system -o jsonpath='{.data.ca\.crt}')
-mkdir -p /root/.kubconfigs && cd /root/.kubconfigs
-
-curl -s https://raw.githubusercontent.com/projectcapsule/capsule/main/hack/create-user.sh | bash -s -- alice solar projectcapsule.dev,solar
-mv alice-solar.kubeconfig alice.kubeconfig
-KUBECONFIG=alice.kubeconfig kubectl config set clusters.kubernetes.certificate-authority-data ${ROOT_CA}
-KUBECONFIG=alice.kubeconfig kubectl config set clusters.kubernetes.server https://127.0.0.1:9001
-
-curl -s https://raw.githubusercontent.com/projectcapsule/capsule/main/hack/create-user.sh | bash -s -- bob wind projectcapsule.dev,wind
-mv bob-wind.kubeconfig bob.kubeconfig
-KUBECONFIG=bob.kubeconfig kubectl config set clusters.kubernetes.certificate-authority-data ${ROOT_CA}
-KUBECONFIG=bob.kubeconfig kubectl config set clusters.kubernetes.server https://127.0.0.1:9001
-
-curl -s https://raw.githubusercontent.com/projectcapsule/capsule/main/hack/create-user.sh | bash -s -- joe green projectcapsule.dev,green
-mv joe-green.kubeconfig joe.kubeconfig
-KUBECONFIG=joe.kubeconfig kubectl config set clusters.kubernetes.certificate-authority-data ${ROOT_CA}
-KUBECONFIG=joe.kubeconfig kubectl config set clusters.kubernetes.server https://127.0.0.1:9001
+kubectl wait --for=condition=Established \
+  crd/tenants.capsule.clastix.io \
+  crd/tenantowners.capsule.clastix.io \
+  crd/globaltenantresources.capsule.clastix.io \
+  crd/tenantresources.capsule.clastix.io \
+  crd/resourcepools.capsule.clastix.io \
+  crd/resourcepoolclaims.capsule.clastix.io --timeout=120s
 
 touch /tmp/finished

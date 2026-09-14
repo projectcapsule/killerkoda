@@ -1,185 +1,78 @@
+# Going further: allocate resources from a pool
 
-<details>
-<summary><strong>Environment quick reference</strong> — services and Dex users</summary>
-<p>
-  <strong>Services:</strong>
-  <a href="{{TRAFFIC_HOST1_30442}}"><img src="https://projectcapsule.dev/favicons/android-96x96.png" alt="" width="20" height="20"> Gangplank</a> ·
-  <a href="{{TRAFFIC_HOST1_30443}}"><img src="https://projectcapsule.dev/favicons/android-96x96.png" alt="" width="20" height="20"> Capsule Proxy</a> ·
-  <a href="{{TRAFFIC_HOST1_30444}}"><img src="https://headlamp.dev/img/favicon.png" alt="" width="20" height="20"> Headlamp</a> ·
-  <a href="{{TRAFFIC_HOST1_32556}}"><img src="https://dexidp.io/favicons/favicon-96x96.png" alt="" width="20" height="20"> Dex</a>
-</p>
+[Resource Pools](https://projectcapsule.dev/docs/resource-management/resourcepools/) give administrators a shared resource budget and tenant users a namespaced claim API.
 
-**Dex login / password:**
-
-- `alice@projectcapsule.dev`{{copy}} / `alice`{{copy}}
-- `bob@projectcapsule.dev`{{copy}} / `bob`{{copy}}
-- `gatsby@projectcapsule.dev`{{copy}} / `gatsby`{{copy}}
-- `renewable@projectcapsule.dev`{{copy}} / `renewable`{{copy}}
-- `admin@projectcapsule.dev`{{copy}} / `admin`{{copy}}
-
-</details>
-
-# ResourcePools
-
-[See Reference](https://projectcapsule.dev/docs/resourcepools/)
-
-`ResourcePools` allow you to define a set of resources, similar to how `ResourceQuotas` work. `ResourcePools` are defined at the cluster scope and should be managed by cluster administrators. However, they provide an interface where cluster administrators can specify from which namespaces resources in a ResourcePool can be claimed. Claiming is done via a namespaced CRD called `ResourcePoolClaim`.
-
-For our tenant `solar` let's create a `ResourcePool` which provides essential compute resources:
-
-```yaml
-apiVersion: capsule.clastix.io/v1beta2
-kind: ResourcePool
-metadata:
-  name: solar
-spec:
-  quota:
-    hard:
-      limits.cpu: "2"
-      limits.memory: 2Gi
-      requests.cpu: "2"
-      requests.memory: 2Gi
-      requests.storage: "5Gi"
-  selectors:
-  - matchLabels:
-      capsule.clastix.io/tenant: solar
-```
-
-**Note**: You can select any namespaces, they don't have to be part of a capsule tenant at all. All the items under `.spec.selectors` are dedicated `OR` queries.
-
-
-
-
-
+The earlier Pods have been deleted. As administrator, create a pool for Solar's namespaces:
 
 ```shell
-kubectl get tnt
+cat /root/capsule-demo/going-further/resourcepool.yaml
+kubectl apply -f /root/capsule-demo/going-further/resourcepool.yaml
+kubectl wait --for=condition=Ready resourcepool/solar --timeout=120s
+kubectl wait --for=create resourcequota/capsule-pool-solar -n solar-production --timeout=120s
+kubectl get resourcequota capsule-pool-solar -n solar-production
 ```{{exec}}
 
-Let's inspect the `solar` tenant more closely:
+The budget is one CPU and 1 GiB of memory. `spec.config.defaultsZero: true` starts each namespace's quota at zero, so a claim is required before Pods can consume resources. This quota is independent of the Tenant's two-namespace limit.
+
+## Claim a production budget
+
+As Alice, this otherwise valid Pod should be **denied by ResourceQuota**:
 
 ```shell
-kubectl get tnt solar -o yaml
+kubectl-alice apply -n solar-production -f /root/capsule-demo/quickstart/guaranteed-pod.yaml
 ```{{exec}}
 
-There's currently not much defined:
-
-```yaml
-spec:
-  additionalRoleBindings:
-  - clusterRoleName: tenant-viewer
-    subjects:
-    - kind: User
-      name: bob
-  cordoned: false
-  ingressOptions:
-    hostnameCollisionScope: Disabled
-  limitRanges: {}
-  networkPolicies: {}
-  owners:
-  - clusterRoles:
-    - admin
-    - capsule-namespace-deleter
-    kind: User
-    name: alice
-  - clusterRoles:
-    - admin
-    - capsule-namespace-deleter
-    kind: Group
-    name: solar-users
-  preventDeletion: false
-```
-
-What's important are the entries under `.spec.owners`. There we can see we have granted the `User` `alice` and the `Group` `solar-users` [Ownership](https://projectcapsule.dev/docs/tenants/permissions/#ownership) of this tenant. From our point of view all these users are responsible to manage the tenant. The main difference is, that `Owners` can manage `Namespaces` within their tenant and grant more permissions to other users.
-
-So how is now the tenant context evaluated? If we as administrators create a new namespace it's not assigned to any tenant, try it yourself:
+Request `256m` CPU and `512Mi` memory, including both requests and limits:
 
 ```shell
-kubectl create ns which-tenant
+cat /root/capsule-demo/going-further/claim.yaml
+kubectl-alice apply -f /root/capsule-demo/going-further/claim.yaml
+kubectl-alice wait --for=condition=Ready resourcepoolclaim/production-budget -n solar-production --timeout=120s
+kubectl-alice get resourcequota capsule-pool-solar -n solar-production
 ```{{exec}}
 
-You can see that no tenant has increased their count:
+Retry the Pod. It uses half the claim:
 
 ```shell
-kubectl get tnt
+kubectl-alice apply -n solar-production -f /root/capsule-demo/quickstart/guaranteed-pod.yaml
+kubectl-alice wait --for=condition=Bound resourcepoolclaim/production-budget -n solar-production --timeout=120s
+kubectl-alice get resourcepoolclaims -n solar-production
 ```{{exec}}
 
-It makes sense, since the admin config was not declared in any tenant as owner. Therefor they are not regarded as tenant user. However since we are using cluster-admin priviliges, we have the right to create namespaces anyway. 
-
-So let's impersonate `alice` and try to create a new namespace:
+Deleting this claim while its resources are in use should be **denied**:
 
 ```shell
-kubectl create ns solar-test --as alice
+kubectl-alice delete resourcepoolclaim production-budget -n solar-production
 ```{{exec}}
 
-... Now we are getting a 403. What's now the problem?
+## Exhaustion and release
 
-**To very key concept** is in what `groups` the user has as attribute. Based on the group membership for the user, it's differenciated if a user is interacting with tenants or with the rest of the Kubernetes API directly.
-
-This is declared in the CapsuleConfiguration:
+Ask for the entire pool from the other namespace:
 
 ```shell
-kubectl get capsuleconfiguration -o yaml
+cat /root/capsule-demo/going-further/queued-claim.yaml
+kubectl-alice apply -f /root/capsule-demo/going-further/queued-claim.yaml
+kubectl-alice wait --for=condition=Exhausted resourcepoolclaim/test-budget -n solar-development --timeout=120s
+kubectl-alice get resourcepoolclaim test-budget -n solar-development -o yaml
 ```{{exec}}
 
-Within the spec we can find, which groups are required to interact with tenants:
+The claim waits because production already holds part of the pool. Its status reports exhaustion.
+
+Delete the Pod, wait for the production claim to become unused, and release it:
 
 ```shell
-...
-userGroups:
-   - projectcapsule.dev
-```
-__info__: if you want to use serviceaccounts, you must add their namespace as group eg. `system:serviceaccounts:tenants-sas`
-
-So let's try this again with also impersonating the group `projectcapsule.dev`:
-
-```shell
-kubectl create ns solar-test --as alice --as-group projectcapsule.dev
+kubectl-alice delete pod guaranteed -n solar-production --wait=true
+kubectl-alice wait --for=condition=Bound=false resourcepoolclaim/production-budget -n solar-production --timeout=120s
+kubectl-alice delete resourcepoolclaim production-budget -n solar-production
+kubectl-alice wait --for=condition=Ready resourcepoolclaim/test-budget -n solar-development --timeout=120s
+kubectl-alice get resourcequota capsule-pool-solar -n solar-development
 ```{{exec}}
 
-That seems to have worked, and it was directly assigned to the correct tenant.
+The queued claim can now allocate the full budget. No Pods use it, so release it too:
 
 ```shell
-kubectl get tnt solar
+kubectl-alice delete resourcepoolclaim test-budget -n solar-development
+kubectl get resourcepool solar
 ```{{exec}}
 
-The same works for the group `solar-users`:
-
-```shell
-kubectl create ns solar-prod --as nobody --as-group projectcapsule.dev --as-group solar-users
-```{{exec}}
-
-Let's try to create another namespace:
-
-```shell
-kubectl create ns solar-dev --as alice --as-group projectcapsule.dev
-```{{exec}}
-
-Now we are exceeding the boundaries the `Cluster Adminsitrator` has defined on this tenant:
-
-```shell
-Error from server (Forbidden): admission webhook "namespaces.projectcapsule.dev" denied the request: Cannot exceed Namespace quota: please, reach out to the system administrators
-```
-
-Now the owners have to figure out themselves how they want to use their resources on their tenant.
-
-If a user has multiple tenants assigned, the placement of the namespace must be explicit with a label. You can try it for `bob`, since he's owner of two tenants
-
-```shell
-kubectl create ns oily --as bob --as-group projectcapsule.dev
-
-Error from server (Forbidden): admission webhook "owner.namespace.projectcapsule.dev" denied the request: Unable to assign namespace to tenant. Please use capsule.clastix.io/tenant label when creating a namespace
-```
-
-Correctly set the label to the correct tenant:
-
-```shell
-kubectl create -f - <<EOF
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    capsule.clastix.io/tenant: "oil"
-  name: oily
-EOF
-```{{exec}}
+The pool remains installed, with namespace quotas returning to zero. Create a new claim before deploying more workloads.

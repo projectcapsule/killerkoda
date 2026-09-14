@@ -1,0 +1,12 @@
+apiVersion: capsule.clastix.io/v1beta2
+kind: ResourcePoolClaim
+metadata:
+  name: test-budget
+  namespace: solar-development
+spec:
+  pool: solar
+  claim:
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.cpu: "1"
+    limits.memory: 1Gi
