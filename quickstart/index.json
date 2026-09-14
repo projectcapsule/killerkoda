@@ -1,0 +1,83 @@
+{
+  "title": "Capsule: Quickstart and Going Further",
+  "description": "Create your first Tenant, then explore policies, permissions, resource distribution, and resource pools.",
+  "details": {
+    "intro": {
+      "text": "intro.md",
+      "foreground": "foreground.sh",
+      "background": "background.sh"
+    },
+    "steps": [
+      {
+        "title": "1. Environment",
+        "text": "environment.md"
+      },
+      {
+        "title": "2. Create your first Tenant",
+        "text": "main.md"
+      },
+      {
+        "title": "3. Namespaces as a Tenant owner",
+        "text": "namespaces.md"
+      },
+      {
+        "title": "4. List with Capsule Proxy",
+        "text": "proxy.md"
+      },
+      {
+        "title": "5. Workload QoS",
+        "text": "enforcement.md"
+      },
+      {
+        "title": "6. Going further: Pod Security",
+        "text": "security.md"
+      },
+      {
+        "title": "7. Going further: Services",
+        "text": "services.md"
+      },
+      {
+        "title": "8. Going further: Permissions",
+        "text": "permissions.md"
+      },
+      {
+        "title": "9. Going further: Platform resources",
+        "text": "replications.md"
+      },
+      {
+        "title": "10. Going further: Tenant resources",
+        "text": "tenantresources.md"
+      },
+      {
+        "title": "11. Going further: Resource pools",
+        "text": "resourcepools.md"
+      },
+      {
+        "title": "12. Going further: Browser access",
+        "text": "access.md"
+      }
+    ],
+    "assets": {
+      "controlplane": [
+        {
+          "file": "**",
+          "target": "/root/.assets/",
+          "chmod": "+x"
+        }
+      ],
+      "host01": [
+        {
+          "file": "**",
+          "target": "/root/.assets/",
+          "chmod": "+x"
+        }
+      ]
+    },
+    "finish": {
+      "text": "finish.md"
+    }
+  },
+  "backend": {
+    "imageid": "kubernetes-kubeadm-1node-4GB"
+  }
+}

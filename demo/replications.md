@@ -1,53 +1,112 @@
-# Going further: distribute platform resources
 
-A [GlobalTenantResource](https://projectcapsule.dev/docs/replications/global/) lets the administrator distribute resources into matching tenant namespaces. These examples select Solar's namespaces explicitly.
+<details>
+<summary><strong>Environment quick reference</strong> — services and Dex users</summary>
+<p>
+  <strong>Services:</strong>
+  <a href="{{TRAFFIC_HOST1_30442}}"><img src="https://projectcapsule.dev/favicons/android-96x96.png" alt="" width="20" height="20"> Gangplank</a> ·
+  <a href="{{TRAFFIC_HOST1_30443}}"><img src="https://projectcapsule.dev/favicons/android-96x96.png" alt="" width="20" height="20"> Capsule Proxy</a> ·
+  <a href="{{TRAFFIC_HOST1_30444}}"><img src="https://headlamp.dev/img/favicon.png" alt="" width="20" height="20"> Headlamp</a> ·
+  <a href="{{TRAFFIC_HOST1_32556}}"><img src="https://dexidp.io/favicons/favicon-96x96.png" alt="" width="20" height="20"> Dex</a>
+</p>
 
-## Resource defaults per environment
+**Dex login / password:**
 
-Review and apply the LimitRange distribution:
+- `alice@projectcapsule.dev`{{copy}} / `alice`{{copy}}
+- `bob@projectcapsule.dev`{{copy}} / `bob`{{copy}}
+- `gatsby@projectcapsule.dev`{{copy}} / `gatsby`{{copy}}
+- `renewable@projectcapsule.dev`{{copy}} / `renewable`{{copy}}
+- `admin@projectcapsule.dev`{{copy}} / `admin`{{copy}}
 
-```shell
-cat /root/capsule-demo/going-further/limitranges.yaml
-kubectl apply -f /root/capsule-demo/going-further/limitranges.yaml
-kubectl wait --for=create limitrange/service-level-silver -n solar-development --timeout=120s
-kubectl wait --for=create limitrange/service-level-gold -n solar-production --timeout=120s
-```{{exec}}
+</details>
 
-The `test` namespace receives silver defaults; production receives gold defaults. Bronze covers `dev` namespaces if you add one later or change an environment label. Its minimum memory constraint keeps the LimitRange valid without assigning defaults.
+# Replications
 
-Inspect the generated resources:
+[Documentation](https://projectcapsule.dev/docs/replications/)
 
-```shell
-kubectl-alice get limitrange service-level-silver -n solar-development -o yaml
-kubectl-alice get limitrange service-level-gold -n solar-production -o yaml
-```{{exec}}
+From the perspective of an `Cluster Administrator`, we want to ensure certain resources are distributed amongst the namespaces of tenants. This way we can control basic ctrical tenancy.
 
-Revisit the Pod that had no resources. Production now receives matching CPU and memory requests and limits from its LimitRange, satisfying the existing `Guaranteed` rule:
+If we look at [Networkpolicies](https://kubernetes.io/docs/concepts/services-networking/network-policies/), it's a core component of multi-tenancy. We should always isolate all the namespaces from tenants with a zero-trust networkpolicy. This way no communication amongst namespaces is possible.
 
-```shell
-kubectl-alice apply -n solar-production -f /root/capsule-demo/quickstart/pod.yaml
-kubectl-alice wait --for=jsonpath='{.status.qosClass}'=Guaranteed pod/hello -n solar-production --timeout=120s
-kubectl-alice get pod hello -n solar-production -o jsonpath='{.spec.containers[0].resources}{"\n"}{.status.qosClass}{"\n"}'
-```{{exec}}
-
-Expect CPU `128m`, memory `256Mi`, and `Guaranteed`. Clean up before the resource pool chapter:
+Let's see if there are already any Networkpolicies:
 
 ```shell
-kubectl-alice delete pod hello -n solar-production --wait=true
+kubectl get netpol -A 
 ```{{exec}}
 
-## Network policies
-
-Distribute a policy that allows traffic between Solar namespaces and DNS queries to CoreDNS. Other ingress and egress are not allowed by this policy:
+Turns out there are already policies in the namespaces we just created:
 
 ```shell
-cat /root/capsule-demo/going-further/networkpolicies.yaml
-kubectl apply -f /root/capsule-demo/going-further/networkpolicies.yaml
-kubectl wait --for=create networkpolicy/tenant-isolation -n solar-development --timeout=120s
-kubectl wait --for=create networkpolicy/tenant-isolation -n solar-production --timeout=120s
-kubectl-alice get networkpolicy tenant-isolation -n solar-production -o yaml
+solar-prod    zero-trust       <none>                        3m57s
+solar-test    zero-trust       <none>                        3m58s
+```
+
+Looking at one, it does exactly what we are lookin to do:
+
+```shell
+kubectl get netpol zero-trust -n solar-prod -o yaml
 ```{{exec}}
 
-Capsule distributes the objects; the cluster's network plugin enforces them. Kubernetes NetworkPolicies are additive, so another policy can allow additional traffic. This exercise verifies distribution; connectivity testing also depends on the backend's CNI and any other policies.
+This is thanks to [Replications/Resources](https://projectcapsule.dev/docs/replications/#globaltenantresource)
 
-The next chapter lets Alice distribute application configuration herself.
+We have already created a replication in advance, which deploys this networkpolicy to all namespaces of the solar tenant, review it:
+
+```shell
+kubectl get GlobalTenantResource zero-trust-netpol -o yaml
+```{{exec}}
+
+`GlobalTenantResource` are a greate way to ensure namespaced objects or replicate one object to these namespaces. The resources are meant for `Cluster Administrators` to control their fleet of tenants and create the boundaries to their cluster, that they require.
+
+## Tenant-Owner
+
+As an `Tenant Owner` you might have the desire to distribute resources amongst all the namespaces in your tenant. This can be achieved with `TenantResource`. They are scoped to the tenant where they are created in.
+
+Let's create a new docker pull secrets (pretend that's like a token from a harbor registry or something like that). You as `Tenant Owner` want to distribute that secret across your tenant. First create the secret.
+
+```shell
+kubectl create --as alice --as-group projectcapsule.dev -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-pullsecret
+  namespace: solar-prod
+  labels:
+    distribute: "yes"
+data:
+  .dockerconfigjson: ewogICAgImF1dGhzIjogewogICAgICAgICJodHRwczovL2luZGV4LmRvY2tlci5pby92MS8iOiB7CiAgICAgICAgICAgICJhdXRoIjogImMzUi4uLnpFMiIKICAgICAgICB9CiAgICB9Cn0K
+type: kubernetes.io/dockerconfigjson
+EOF
+```{{exec}}
+
+Now let's create a `TenantResource` which replicates the secret to the other solar namespaces:
+
+```shell
+kubectl create --as alice --as-group projectcapsule.dev -f - <<EOF
+apiVersion: capsule.clastix.io/v1beta2
+kind: TenantResource
+metadata:
+  name: solar-pullsecret
+  namespace: solar-prod
+spec:
+  resyncPeriod: 60s
+  resources:
+    - namespacedItems:
+        - apiVersion: v1
+          kind: Secret
+          namespace: solar-prod
+          selector:
+            matchLabels:
+              distribute: "yes"
+EOF
+```{{exec}}
+
+After creating the `TenantResource` we can take a look at it:
+
+```shell
+kubectl get tenantresource -n solar-prod -o yaml
+```{{exec}}
+
+And we see the resource was successfully distributed to the other namespaces:
+
+```shell
+ kubectl get secret -A
+```{{exec}}

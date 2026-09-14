@@ -24,6 +24,7 @@ spec:
   chart:
     spec:
       chart: capsule
+      version: "0.14.4"
       sourceRef:
         kind: HelmRepository
         name: capsule
@@ -43,6 +44,9 @@ spec:
       enabled: true
       gangplank:
         enabled: true
+        service:
+          type: NodePort
+          nodePort: 30442
         config:
           clusterName: "tenant-cluster"
           apiServerURL: "${PROXY_URL}"
@@ -53,9 +57,12 @@ spec:
             - "groups"
             - "offline_access"
           redirectURL: "${GANGPLANK_URL}/callback"
-          usernameClaim: "email"
-          clientID: "gangplank"
-          clientSecret: "gangplank-secret"
+          usernameClaim: "name"
+          # Use the audience accepted by the API server and Headlamp.
+          clientID: "kubernetes"
+          clientSecret: "kubernetes-secret"
+          # KillerCoda terminates public HTTPS with a publicly trusted CA.
+          removeCAFromKubeconfig: true
           authorizeURL: "${DEX_URL}/auth"
           tokenURL: "${DEX_URL}/token"
       certManager:
@@ -91,6 +98,8 @@ spec:
             name: "admin"
         users:
           - kind: Group
+            name: "projectcapsule.dev"
+          - kind: Group
             name: "capsule-users"
         forceTenantPrefix: false
     rbac:
@@ -110,4 +119,3 @@ spec:
         create: true
         labels:
           rbac.authorization.k8s.io/aggregate-to-admin: "true"
-

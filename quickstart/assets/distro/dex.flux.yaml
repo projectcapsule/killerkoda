@@ -66,11 +66,9 @@ spec:
           redirectURIs:
             - "$PROXY_URL/*"
             - "$HEADLAMP_URL/oidc-callback"
-        - id: gangplank
-          name: Gangplank
-          secret: gangplank-secret
-          redirectURIs:
             - "${GANGPLANK_URL}/callback"
+            - "http://localhost:8000"
+            - "http://localhost:18000"
       staticPasswords:
         - email: bob@projectcapsule.dev
           username: bob

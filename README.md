@@ -1,8 +1,17 @@
 # Capsule on KillerCoda
 
-A guided version of the [Capsule quickstart](https://projectcapsule.dev/docs/quickstart/), followed by exercises from [Going Further](https://projectcapsule.dev/docs/quickstart/extended/).
+Two independent KillerCoda scenarios are available:
 
-The scenario installs its infrastructure with Flux and leaves Tenant creation to the learner. It pins Capsule to **0.14.4**, the release used by the quickstart.
+| Scenario | Purpose |
+| --- | --- |
+| [Demo playground](demo/index.json) | The original playground, with upstream example resources and user kubeconfigs loaded during setup. |
+| [Quickstart](quickstart/index.json) | A guided version of the [Capsule quickstart](https://projectcapsule.dev/docs/quickstart/), followed by [Going Further](https://projectcapsule.dev/docs/quickstart/extended/) exercises. |
+
+Each scenario has its own setup scripts, pages, and assets. The demo playground retains its original behavior.
+
+## Quickstart scenario
+
+The quickstart installs its infrastructure with Flux and leaves Tenant creation to the learner. It pins Capsule to **0.14.4**, the release used by the quickstart.
 
 | Chapters | Exercises |
 | --- | --- |
@@ -11,32 +20,32 @@ The scenario installs its infrastructure with Flux and leaves Tenant creation to
 | 9–10: Distribution | GlobalTenantResource for LimitRanges and NetworkPolicies, TenantResource for application configuration |
 | 11–12: Further exploration | ResourcePool claims, exhaustion and release, OIDC and Headlamp |
 
-## Scenario files
+## Quickstart files
 
-- `demo/index.json` defines chapter order and asset delivery.
-- `demo/background.sh` installs the distribution and copies lesson assets to `/root/capsule-demo`.
-- `demo/assets/quickstart` contains the initial Tenant, TenantOwner, namespace, and Pod examples.
-- `demo/assets/going-further` contains policy stages and resource distribution/pool examples.
-- `demo/assets/scripts` contains bounded reconciliation waits and Alice's certificate/kubeconfig helper.
-- `demo/assets/distro` contains the Flux-managed services and identity configuration.
+- `quickstart/index.json` defines chapter order and asset delivery. Every page, including the intro and finish, starts with a collapsible environment reference containing service links and Dex credentials.
+- `quickstart/background.sh` installs the distribution and copies lesson assets to `/root/capsule-quickstart`.
+- `quickstart/assets/quickstart` contains the initial Tenant, TenantOwner, namespace, and Pod examples.
+- `quickstart/assets/going-further` contains policy stages and resource distribution/pool examples.
+- `quickstart/assets/scripts` contains bounded reconciliation waits and Alice's certificate/kubeconfig helper.
+- `quickstart/assets/distro` contains the Flux-managed services and identity configuration.
 
 The policy stages compose as `quickstart → pod-security → services → permissions`. Each appends rules while preserving the earlier Tenant configuration. Apply the stages in chapter order. Reapplying an earlier stage rolls the Tenant back to that stage.
 
 The walkthrough consistently uses `solar-development` (relabeled from `dev` to `test`) and `solar-production` (`prod`). It does not load the upstream playground or create unrelated Tenants. Dex's additional accounts remain available for manual exploration.
 
-## Maintaining the examples
+## Maintaining the quickstart examples
 
-When updating Capsule, update the pinned chart in `demo/assets/distro/capsule.flux.yaml`, compare the upstream quickstart, and validate the manifests against that release's CRDs. In particular, check `TenantOwner`, `spec.rules[].enforce`, `spec.rules[].permissions.bindings`, replication settings, and ResourcePool fields.
+When updating Capsule, update the pinned chart in `quickstart/assets/distro/capsule.flux.yaml`, compare the upstream quickstart, and validate the manifests against that release's CRDs. In particular, check `TenantOwner`, `spec.rules[].enforce`, `spec.rules[].permissions.bindings`, replication settings, and ResourcePool fields.
 
 Render all policy stages and the distribution locally:
 
 ```sh
-kubectl kustomize demo/assets/quickstart
-kubectl kustomize demo/assets/going-further/pod-security
-kubectl kustomize demo/assets/going-further/services
-kubectl kustomize demo/assets/going-further/permissions
-kubectl kustomize demo/assets/distro
-bash -n demo/background.sh demo/foreground.sh demo/assets/scripts/*.sh
+kubectl kustomize quickstart/assets/quickstart
+kubectl kustomize quickstart/assets/going-further/pod-security
+kubectl kustomize quickstart/assets/going-further/services
+kubectl kustomize quickstart/assets/going-further/permissions
+kubectl kustomize quickstart/assets/distro
+bash -n quickstart/background.sh quickstart/foreground.sh quickstart/assets/scripts/*.sh
 git diff --check
 ```
 

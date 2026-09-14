@@ -1,38 +1,109 @@
-# Workload QoS by environment
 
-The quickstart Tenant already includes [workload rules](https://projectcapsule.dev/docs/rules/enforcement/workloads/). Test them before adding further policies.
+<details>
+<summary><strong>Environment quick reference</strong> — services and Dex users</summary>
+<p>
+  <strong>Services:</strong>
+  <a href="{{TRAFFIC_HOST1_30442}}"><img src="https://projectcapsule.dev/favicons/android-96x96.png" alt="" width="20" height="20"> Gangplank</a> ·
+  <a href="{{TRAFFIC_HOST1_30443}}"><img src="https://projectcapsule.dev/favicons/android-96x96.png" alt="" width="20" height="20"> Capsule Proxy</a> ·
+  <a href="{{TRAFFIC_HOST1_30444}}"><img src="https://headlamp.dev/img/favicon.png" alt="" width="20" height="20"> Headlamp</a> ·
+  <a href="{{TRAFFIC_HOST1_32556}}"><img src="https://dexidp.io/favicons/favicon-96x96.png" alt="" width="20" height="20"> Dex</a>
+</p>
 
-This Pod has no CPU or memory requests or limits. Kubernetes classifies it as `BestEffort`:
+**Dex login / password:**
 
-```shell
-cat /root/capsule-demo/quickstart/pod.yaml
-kubectl-alice apply -n solar-development -f /root/capsule-demo/quickstart/pod.yaml
-kubectl-alice wait --for=jsonpath='{.status.qosClass}'=BestEffort pod/hello -n solar-development --timeout=120s
-kubectl-alice get pod hello -n solar-development -o jsonpath='{.status.qosClass}{"\n"}'
-```{{exec}}
+- `alice@projectcapsule.dev`{{copy}} / `alice`{{copy}}
+- `bob@projectcapsule.dev`{{copy}} / `bob`{{copy}}
+- `gatsby@projectcapsule.dev`{{copy}} / `gatsby`{{copy}}
+- `renewable@projectcapsule.dev`{{copy}} / `renewable`{{copy}}
+- `admin@projectcapsule.dev`{{copy}} / `admin`{{copy}}
 
-The same Pod in production should be **denied** by the Tenant's `Guaranteed`-only rule:
+</details>
 
-```shell
-kubectl-alice apply -n solar-production -f /root/capsule-demo/quickstart/pod.yaml
-```{{exec}}
+# Enforcement
 
-For `Guaranteed` QoS, every container needs matching CPU and memory requests and limits:
+[See Reference](https://projectcapsule.dev/docs/tenants/enforcement/)
 
-```shell
-cat /root/capsule-demo/quickstart/guaranteed-pod.yaml
-kubectl-alice apply -n solar-production -f /root/capsule-demo/quickstart/guaranteed-pod.yaml
-kubectl-alice wait --for=jsonpath='{.status.qosClass}'=Guaranteed pod/guaranteed -n solar-production --timeout=120s
-kubectl-alice get pod guaranteed -n solar-production -o jsonpath='{.status.qosClass}{"\n"}'
-```{{exec}}
+From the perspective of an `Cluster Administrator`, we want to ensure Tenants can only allocate certain Resources from our cluster.
 
-Expect `Guaranteed`. This checks admission and resource settings; the Pod does not need to finish starting to inspect its QoS.
-
-Remove both accepted Pods before continuing, so the later resource pool starts without workload consumption:
+We can update the tenant solar, that it only allows to usage of the selected PriorityClasses. If no PriorityClass is set, we can overwrite that on tenant basis before considering the cluster-wide default. Let's inspect the PriorityClasses intended for Customers:
 
 ```shell
-kubectl-alice delete pod hello -n solar-development --wait=true
-kubectl-alice delete pod guaranteed -n solar-production --wait=true
+kubectl get priorityclass -l consumer=customer
+```
+
+You can see best-effort is globaldefault, meaning it would be set by default.
+
+Now we adjust the tenant `solar`, that only PriorityClasses with the label `consumer=customer` are allowed:
+
+```shell
+kubectl apply -f - <<EOF
+---
+apiVersion: capsule.clastix.io/v1beta2
+kind: Tenant
+metadata:
+  name: solar
+  labels:
+    app.kubernetes.io/type: prod
+spec:
+  namespaceOptions:
+    quota: 2
+  owners:
+  - name: alice
+    kind: User
+  - name: solar-users
+    kind: Group
+  additionalRoleBindings:
+  - clusterRoleName: tenant-viewer
+    subjects:
+    - kind: User
+      name: bob
+
+  # This is new
+  priorityClasses:
+    default: "customer"
+    matchLabels:
+      consumer: "customer"
+EOF
 ```{{exec}}
 
-You have completed the core quickstart. The remaining chapters extend this same Tenant using the [Going Further guide](https://projectcapsule.dev/docs/quickstart/extended/).
+Great, now we try to schedule a new pod into `solar-prod`, using the priorityClass `system-node-critical` (which should not be used by tenants):
+
+
+```shell
+kubectl create --as alice --as-group projectcapsule.dev -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-node-critical
+  namespace: solar-prod
+spec:
+  containers:
+  - name: busybox
+    image: busybox:latest
+  priorityClassName: system-node-critical
+EOF
+```{{exec}}
+
+That's being blocked! That's what we as Cluster Administrators expected. Let's try one, where we don't set the `priorityClassName`:
+
+```shell
+kubectl create --as alice --as-group projectcapsule.dev -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-default-priority
+  namespace: solar-prod
+spec:
+  containers:
+  - name: busybox
+    image: busybox:latest
+EOF
+```{{exec}}
+
+If we verify the priorityClass for the pod, it's set to the tenant default:
+
+```shell
+kubectl get pod pod-default-priority -n solar-prod -o jsonpath='{.spec.priorityClassName}'
+```{{exec}}
+
+With these same principles you can control all relevant scheduling of resources.

@@ -18,10 +18,14 @@
 
 </details>
 
-## Wrapping Up
+# Capsule: from quickstart to platform policies
 
-Thanks for using this playground!
+Build a multi-tenant Kubernetes environment with [Capsule](https://projectcapsule.dev/docs/quickstart/).
 
-## Support
+Start as the cluster administrator, create the `solar` Tenant, then work as its owner `alice`. You will test namespace boundaries, list resources through Capsule Proxy, and run workloads under environment-specific rules.
 
-We hope you liked this course and we were able to provide you with valuable information. Feel free to explore our other courses and scenarios. 🦄
+The later chapters follow [Going Further](https://projectcapsule.dev/docs/quickstart/extended/): Pod Security Standards, Service restrictions, permissions, resource distribution, and resource pools. Finish by exploring OIDC login and Headlamp.
+
+The cluster, Capsule, Proxy, and browser services are installed automatically. Wait for **Ready to Play!** before starting; installation can take several minutes. The Tenant and example workloads are created by you during the chapters.
+
+Complete the chapters in order. Commands marked as expected denials are part of the exercises.

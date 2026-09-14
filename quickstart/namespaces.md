@@ -1,3 +1,23 @@
+<details>
+<summary><strong>Environment quick reference</strong> — services and Dex users</summary>
+<p>
+  <strong>Services:</strong>
+  <a href="{{TRAFFIC_HOST1_30442}}"><img src="https://projectcapsule.dev/favicons/android-96x96.png" alt="" width="20" height="20"> Gangplank</a> ·
+  <a href="{{TRAFFIC_HOST1_30443}}"><img src="https://projectcapsule.dev/favicons/android-96x96.png" alt="" width="20" height="20"> Capsule Proxy</a> ·
+  <a href="{{TRAFFIC_HOST1_30444}}"><img src="https://headlamp.dev/img/favicon.png" alt="" width="20" height="20"> Headlamp</a> ·
+  <a href="{{TRAFFIC_HOST1_32556}}"><img src="https://dexidp.io/favicons/favicon-96x96.png" alt="" width="20" height="20"> Dex</a>
+</p>
+
+**Dex login / password:**
+
+- `alice@projectcapsule.dev`{{copy}} / `alice`{{copy}}
+- `bob@projectcapsule.dev`{{copy}} / `bob`{{copy}}
+- `gatsby@projectcapsule.dev`{{copy}} / `gatsby`{{copy}}
+- `renewable@projectcapsule.dev`{{copy}} / `renewable`{{copy}}
+- `admin@projectcapsule.dev`{{copy}} / `admin`{{copy}}
+
+</details>
+
 # Work as Alice
 
 Use the same identity as the [quickstart](https://projectcapsule.dev/docs/quickstart/#as-a-tenant-owner). This alias uses the administrator's impersonation permission to simulate Alice:
@@ -20,7 +40,7 @@ Use the correct prefix:
 
 ```shell
 kubectl-alice create namespace solar-development -o yaml
-bash /root/capsule-demo/scripts/wait-tenant.sh
+bash /root/capsule-quickstart/scripts/wait-tenant.sh
 ```{{exec}}
 
 The result includes `capsule.clastix.io/tenant: solar` and the default `environment: dev` label.
@@ -47,9 +67,9 @@ Keep this namespace labeled `test` for the later LimitRange example; its name st
 Create the second namespace with `environment: prod`:
 
 ```shell
-cat /root/capsule-demo/quickstart/production.yaml
-kubectl-alice apply -f /root/capsule-demo/quickstart/production.yaml
-bash /root/capsule-demo/scripts/wait-tenant.sh
+cat /root/capsule-quickstart/quickstart/production.yaml
+kubectl-alice apply -f /root/capsule-quickstart/quickstart/production.yaml
+bash /root/capsule-quickstart/scripts/wait-tenant.sh
 ```{{exec}}
 
 A third namespace should be **denied** because the quota is two:

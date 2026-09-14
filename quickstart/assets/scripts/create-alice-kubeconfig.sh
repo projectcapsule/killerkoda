@@ -3,7 +3,7 @@ set -euo pipefail
 umask 077
 
 # Run with administrator credentials. The output authenticates only Alice.
-output_dir=/root/capsule-demo
+output_dir=/root/capsule-quickstart
 work_dir="$(mktemp -d)"
 trap 'rm -rf "${work_dir}"' EXIT
 mkdir -p "${output_dir}"
