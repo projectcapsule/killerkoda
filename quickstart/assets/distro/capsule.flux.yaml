@@ -72,6 +72,7 @@ spec:
             - 127.0.0.1
           dnsNames:
             - localhost
+            - "${PROXY_HOST}"
       service:
         type: NodePort
         nodePort: 30443

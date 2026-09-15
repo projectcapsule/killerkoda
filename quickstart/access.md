@@ -20,7 +20,7 @@
 
 # Going further: browser access and OIDC
 
-The terminal exercises used impersonation and an Alice certificate. The environment also includes Dex, Gangplank, and Headlamp for a browser-based workflow.
+The terminal exercises used impersonation and certificates for Alice and Bob. The environment also includes Dex, Gangplank, and Headlamp for a browser-based workflow.
 
 ## Explore with Headlamp
 
@@ -31,7 +31,7 @@ Open [Headlamp]({{TRAFFIC_HOST1_30444}}) and sign in through Dex using:
 
 The API server reads Dex's `name` claim as `alice`, matching the TenantOwner you created. Headlamp sends requests through Capsule Proxy, so you can explore both Solar namespaces, `lunar-development`, and the replicated `app-config` ConfigMap using Alice's permissions.
 
-Sign out and sign in as `bob@projectcapsule.dev` / `bob`. Bob's production RoleBinding gives him a view of `solar-production`, including its ConfigMaps, while excluding Secrets and writes. His Dex groups do not include the synthetic `solar:operators` group from the permissions exercise.
+Sign out and sign in as `bob@projectcapsule.dev` / `bob`, then select `solar-production` in Headlamp's namespace selector. Bob's production RoleBinding lets him read that namespace's ConfigMaps while excluding Secrets and writes. His Dex groups do not include the synthetic `solar:operators` group from the permissions exercise. Use the selected namespace when browsing his resources.
 
 The Environment chapter lists the other demo accounts. Creating an identity-provider account does not itself grant Tenant access; the ownership and RoleBindings from this walkthrough determine each view.
 

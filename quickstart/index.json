@@ -1,6 +1,6 @@
 {
   "title": "Capsule: Quickstart and Going Further",
-  "description": "Create your first Tenant, then explore policies, permissions, resource distribution, and resource pools.",
+  "description": "Create your first Tenant, then explore policies, resource distribution, pools, ownership, and advanced Proxy access.",
   "details": {
     "intro": {
       "text": "intro.md",
@@ -41,19 +41,31 @@
         "text": "permissions.md"
       },
       {
-        "title": "9. Going further: Platform resources",
+        "title": "9. Going further: Workload priority",
+        "text": "scheduling.md"
+      },
+      {
+        "title": "10. Going further: Platform resources",
         "text": "replications.md"
       },
       {
-        "title": "10. Going further: Tenant resources",
+        "title": "11. Going further: Tenant resources",
         "text": "tenantresources.md"
       },
       {
-        "title": "11. Going further: Resource pools",
+        "title": "12. Going further: Resource pools",
         "text": "resourcepools.md"
       },
       {
-        "title": "12. Going further: Browser access",
+        "title": "13. Going further: Groups and multiple tenants",
+        "text": "ownership.md"
+      },
+      {
+        "title": "14. Going further: Proxy access and personas",
+        "text": "proxy-access.md"
+      },
+      {
+        "title": "15. Going further: Browser access",
         "text": "access.md"
       }
     ],

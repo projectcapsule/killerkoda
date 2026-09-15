@@ -3,8 +3,6 @@ kind: RoleBinding
 metadata:
   name: bob-observer
   namespace: solar-production
-  labels:
-    reflection.proxy.projectcapsule.dev/enabled: "true"
 subjects:
   - kind: User
     name: bob

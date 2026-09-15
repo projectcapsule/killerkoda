@@ -35,14 +35,20 @@ alias kubectl-bob-proxy='kubectl --kubeconfig /root/capsule-quickstart/bob.kubec
 
 The certificate identifies `bob` in group `projectcapsule.dev`. It does not include the synthetic `solar:operators` group used in the permissions chapter.
 
-[RoleBinding reflection](https://projectcapsule.dev/docs/proxy/reflection/) lets Bob discover the namespace where he has access. The RoleBinding's reflection label also enables namespaced collection reads using its referenced role:
+[RoleBinding reflection](https://projectcapsule.dev/docs/proxy/reflection/#namespaces) lets Bob discover the namespace where he has access. Namespace discovery needs no special RoleBinding label. Read its ConfigMaps by naming the namespace:
 
 ```shell
 kubectl-bob-proxy get namespaces
-kubectl-bob-proxy get configmaps -A
+kubectl-bob-proxy get configmaps -n solar-production
 ```{{exec}}
 
-Expect only `solar-production` and its ConfigMaps. If the reflector is still catching up, repeat the reads after a few seconds.
+Expect the namespace list to contain only `solar-production`, followed by its ConfigMaps. If the reflector is still catching up, repeat the reads after a few seconds.
+
+Reading the development namespace should be **Forbidden**:
+
+```shell
+kubectl-bob-proxy get configmaps -n solar-development
+```{{exec}}
 
 The `view` role excludes Secret access, so this should be **Forbidden**:
 

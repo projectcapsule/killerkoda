@@ -84,6 +84,9 @@ kubectl oidc-login --help >/dev/null
 
 export GANGPLANK_URL="$(sed 's/PORT/30442/g' /etc/killercoda/host)"
 export PROXY_URL="$(sed 's/PORT/30443/g' /etc/killercoda/host)"
+# Certificate DNS names need only the hostname, without the scheme, port, or path.
+PROXY_HOST="${PROXY_URL#*://}"
+export PROXY_HOST="${PROXY_HOST%%[:/?#]*}"
 export HEADLAMP_URL="$(sed 's/PORT/30444/g' /etc/killercoda/host)"
 export DEX_URL="$(sed 's/PORT/32556/g' /etc/killercoda/host)"
 
@@ -94,7 +97,7 @@ kubectl kustomize /root/.assets/flux/ | kubectl apply -f -
 
 # Install Distribution
 kubectl kustomize /root/.assets/distro/ \
-  | envsubst '${PROXY_URL} ${HEADLAMP_URL} ${GANGPLANK_URL} ${DEX_URL}' \
+  | envsubst '${PROXY_URL} ${PROXY_HOST} ${HEADLAMP_URL} ${GANGPLANK_URL} ${DEX_URL}' \
   | kubectl apply -f -
 
 # Install Flux
