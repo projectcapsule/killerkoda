@@ -59,6 +59,8 @@ spec:
           usernameClaim: "email"
           clientID: "gangplank"
           clientSecret: "gangplank-secret"
+          # KillerCoda terminates public HTTPS with a publicly trusted CA.
+          removeCAFromKubeconfig: true
           authorizeURL: "${DEX_URL}/auth"
           tokenURL: "${DEX_URL}/token"
       certManager:
