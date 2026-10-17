@@ -1,7 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "baseBranches": ["main"],
+  "baseBranchPatterns": [
+    "main"
+  ],
   "prHourlyLimit": 0,
   "prConcurrentLimit": 0,
   "branchConcurrentLimit": 0,
@@ -10,10 +12,14 @@
   "semanticCommits": "enabled",
   "ignoreUnstable": false,
   "argocd": {
-    "fileMatch": ["^.*argo\\.yaml$"]
+    "managerFilePatterns": [
+      "/^.*argo\\.yaml$/"
+    ]
   },
   "flux": {
-    "fileMatch": ["^.*flux\\.yaml$"]
+    "managerFilePatterns": [
+      "/^.*flux\\.yaml$/"
+    ]
   },
   "terraform": {
     "enabled": false
