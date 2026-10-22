@@ -49,8 +49,6 @@ spec:
       name: token-ca
     - name: ca-store
       mountPath: /etc/ssl/
-    - name: headlamp-plugins
-      mountPath: /build/plugins
     env:
       - name: KUBERNETES_SERVICE_HOST
         value: capsule-proxy.capsule-system.svc
@@ -124,7 +122,13 @@ spec:
         plugins:
           - name: capsule
             source: https://artifacthub.io/packages/headlamp/headlamp-capsule/capsule
-            version: 0.2.1
+            version: 0.3.1
+          - name: change-windows
+            source: https://artifacthub.io/packages/headlamp/change-windows-headlamp/change-windows
+            version: 0.1.0
+          - name: resource-permits
+            source: https://artifacthub.io/packages/headlamp/resource-permits-headlamp/resource-permits
+            version: 0.1.0
         installOptions:
           parallel: true
           maxConcurrent: 2
