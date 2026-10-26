@@ -128,7 +128,7 @@ spec:
             version: 0.1.4
           - name: resource-permits
             source: https://artifacthub.io/packages/headlamp/resource-permits-headlamp/resource-permits
-            version: 0.1.0
+            version: 0.3.0
         installOptions:
           parallel: true
           maxConcurrent: 2

@@ -193,6 +193,26 @@ cd /root/.assets/objects/playground
 make apply-platform
 make apply-user
 
+# Apply Resource Permits after Capsule has created the Solar namespaces.
+git clone https://github.com/projectcapsule/resource-permits.git /root/.assets/resource-permits
+resource_permits_manifests=/root/.assets/resource-permits/playground/manifests
+kubectl apply -k "${resource_permits_manifests}/platform/globalresourcepermittemplates"
+kubectl apply -f "${resource_permits_manifests}/platform/resourcepermittemplates"
+kubectl apply -f "${resource_permits_manifests}/platform/globaltenantresources"
+kubectl apply --as alice --as-group projectcapsule.dev \
+  -k "${resource_permits_manifests}/user/solar/resourcepermits"
+kubectl apply --as alice --as-group projectcapsule.dev \
+  -f "${resource_permits_manifests}/user/solar/resourcepermits/temporary-config.yaml"
+
+# Adapt the runnable Change Windows demo to the Flux release identities.
+git clone https://github.com/projectcapsule/change-windows.git /root/.assets/change-windows
+kubectl kustomize /root/.assets/change-windows/playground/manifests \
+  | sed -e 's/schedule-action-controller-system/capsule-system/g' \
+    -e 's/schedule-action-controller-controller-manager/change-windows/g' \
+    -e 's/namespace: kube-system/namespace: capsule-system/g' \
+  | kubectl apply -f -
+kubectl wait changewindow/playground --for=condition=Ready --timeout=120s
+
 # Create Kubeconfigs
 kubectl get secret capsule-proxy -n capsule-system -o jsonpath='{.data.ca\.crt}'
 
