@@ -85,10 +85,10 @@ spec:
       install: true
     replicaCount: 2
     certManager:
-      generateCertificates: false
+      generateCertificates: true
     tls:
-      enableController: true
-      create: true
+      enableController: false
+      create: false
     manager:
       options:
         allowServiceAccountPromotion: true

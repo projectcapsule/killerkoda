@@ -23,7 +23,7 @@ spec:
     - name: cert-manager
   chart:
     spec:
-      chart: capsule
+      chart: change-windows
       sourceRef:
         kind: HelmRepository
         name: change-windows
