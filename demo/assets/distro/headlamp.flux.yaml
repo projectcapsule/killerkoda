@@ -15,7 +15,8 @@ spec:
   chart:
     spec:
       chart: headlamp
-      version: "0.42.0"
+      # Resource Permits and Change Windows require Headlamp >= 0.45.0.
+      version: "0.45.0"
       sourceRef:
         kind: HelmRepository
         name: headlamp-charts
@@ -128,7 +129,13 @@ spec:
             version: 0.1.4
           - name: resource-permits
             source: https://artifacthub.io/packages/headlamp/resource-permits-headlamp/resource-permits
-            version: 0.3.0
+            version: 0.0.3
+          - name: ssa-inspector
+            source: https://artifacthub.io/packages/headlamp/buttah-headlamp-plugins/ssa-inspector
+            version: 0.1.0
+          - name: flux
+            source: https://artifacthub.io/packages/headlamp/buttah-headlamp-plugins/flux
+            version: 0.1.0
         installOptions:
           parallel: true
           maxConcurrent: 2

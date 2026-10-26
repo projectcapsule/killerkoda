@@ -191,6 +191,25 @@ kubectl wait --namespace flux-system --for=condition=ready helmrelease --all --t
 git clone https://github.com/projectcapsule/capsule.git /root/.assets/objects
 cd /root/.assets/objects/playground
 make apply-platform
+
+# TenantOwner promotion is asynchronous. Namespace admission uses the Tenant's
+# resolved status.owners, which may still be empty immediately after apply.
+for assignment in wind:gatsby green:bob solar:alice; do
+  tenant_name="${assignment%%:*}"
+  owner_name="${assignment#*:}"
+
+  owner_generation="$(kubectl get "tenantowner/${owner_name}" -o jsonpath='{.metadata.generation}')"
+  kubectl wait "tenantowner/${owner_name}" \
+    --for="jsonpath={.status.observedGeneration}=${owner_generation}" --timeout=120s
+  kubectl wait "tenantowner/${owner_name}" --for=condition=Ready --timeout=120s
+
+  tenant_generation="$(kubectl get "tenant/${tenant_name}" -o jsonpath='{.metadata.generation}')"
+  kubectl wait "tenant/${tenant_name}" \
+    --for="jsonpath={.status.observedGeneration}=${tenant_generation}" --timeout=120s
+  kubectl wait "tenant/${tenant_name}" \
+    --for="jsonpath={.status.owners[?(@.name==\"${owner_name}\")].kind}=User" --timeout=120s
+done
+
 make apply-user
 
 # Apply Resource Permits after Capsule has created the Solar namespaces.

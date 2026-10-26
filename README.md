@@ -11,6 +11,8 @@ Each scenario has its own setup scripts and assets. The demo has a single Enviro
 
 The demo clones the Capsule, Resource Permits, and Change Windows repositories during setup. After loading Capsule's playground, it applies Resource Permits' global and namespaced templates, Proxy discovery settings, and Solar requests as Alice. It also applies Change Windows' runnable playground demo, adapting its executor, controller, and Headlamp references to the services installed in `capsule-system`, and waits for the window to become ready. The add-on checkouts remain in `/root/.assets/resource-permits` and `/root/.assets/change-windows` for exploration.
 
+Before creating playground namespaces, setup waits for the TenantOwners to reconcile and for `wind`, `green`, and `solar` to list `gatsby`, `bob`, and `alice` in their resolved owners. These are short usernames, matching the upstream impersonation commands and Dex's `name` claim. Signing in with an email address does not change that claim.
+
 ## Quickstart scenario
 
 The quickstart installs its infrastructure with Flux and leaves Tenant creation to the learner. It pins Capsule to **0.14.4**, the release used by the quickstart.
