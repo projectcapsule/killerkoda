@@ -7,7 +7,6 @@ resources:
   - cert-manager.flux.yaml
   - dex.flux.yaml
   - capsule.flux.yaml
-  - change-windows.flux.yaml
   - headlamp.flux.yaml
   - rbac.yaml
   - priority.yaml
