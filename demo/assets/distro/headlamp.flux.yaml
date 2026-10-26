@@ -125,7 +125,7 @@ spec:
             version: 0.3.1
           - name: change-windows
             source: https://artifacthub.io/packages/headlamp/change-windows-headlamp/change-windows
-            version: 0.1.0
+            version: 0.1.4
           - name: resource-permits
             source: https://artifacthub.io/packages/headlamp/resource-permits-headlamp/resource-permits
             version: 0.1.0
@@ -135,6 +135,7 @@ spec:
     config:
         pluginsDir: /build/plugins
         inCluster: true
+        watchPlugins: true
         extraArgs:
           - -oidc-ca-file=/etc/ssl/certs/ca-certificates.crt
         oidc:
