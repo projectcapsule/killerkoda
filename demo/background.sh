@@ -216,9 +216,7 @@ make apply-user
 # Apply Resource Permits after Capsule has created the Solar namespaces.
 git clone --depth 1 https://github.com/projectcapsule/resource-permits.git /root/.assets/resource-permits
 resource_permits_manifests=/root/.assets/resource-permits/playground/manifests
-kubectl apply -k "${resource_permits_manifests}/platform/globalresourcepermittemplates"
-kubectl apply -f "${resource_permits_manifests}/platform/resourcepermittemplates"
-kubectl apply -f "${resource_permits_manifests}/platform/globaltenantresources"
+kubectl kustomize "${resource_permits_manifests}/platform/" | kubectl apply -k -
 kubectl apply --as alice --as-group projectcapsule.dev \
   -k "${resource_permits_manifests}/user/solar/resourcepermits"
 kubectl apply --as alice --as-group projectcapsule.dev \
