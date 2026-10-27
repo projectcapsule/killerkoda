@@ -16,7 +16,7 @@ spec:
     spec:
       chart: headlamp
       # Resource Permits and Change Windows require Headlamp >= 0.45.0.
-      version: "0.45.0"
+      version: "0.46.0"
       sourceRef:
         kind: HelmRepository
         name: headlamp-charts
