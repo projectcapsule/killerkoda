@@ -29,7 +29,7 @@ spec:
         kind: HelmRepository
         name: capsule
         namespace: flux-system
-      interval: 5m0s
+      interval: 1m
   install:
     createNamespace: true
     remediation:

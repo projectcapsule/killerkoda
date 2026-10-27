@@ -3,6 +3,17 @@ kind: Kustomization
 resources:
   - https://github.com/fluxcd/flux2/releases/download/v2.4.0/install.yaml
 patches:
+  # Keep dependency and transient-error retries short in this disposable cluster.
+  - patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --requeue-dependency=5s
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --max-retry-delay=30s
+    target:
+      kind: Deployment
+      name: "(helm-controller|source-controller)"
   - patch: |
       - op: add
         path: /spec/template/spec/containers/0/args/-

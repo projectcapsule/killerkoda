@@ -5,7 +5,7 @@ metadata:
   name: dex
   namespace: flux-system
 spec:
-  interval: 1h
+  interval: 1m
   url: https://charts.dexidp.io
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2
@@ -14,7 +14,7 @@ metadata:
   name: dex
   namespace: flux-system
 spec:
-  interval: 10m
+  interval: 15s
   serviceAccountName: kustomize-controller
   targetNamespace: dex
   chart:
@@ -24,7 +24,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: dex
-      interval: 1h
+      interval: 1m
   install:
     createNamespace: true
     remediation:

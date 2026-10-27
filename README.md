@@ -13,6 +13,8 @@ The demo clones the Capsule, Resource Permits, and Change Windows repositories d
 
 Before creating playground namespaces, setup waits for the TenantOwners to reconcile and for `wind`, `green`, and `solar` to list `gatsby`, `bob`, and `alice` in their resolved owners. These are short usernames, matching the upstream impersonation commands and Dex's `name` claim. Signing in with an email address does not change that claim.
 
+The demo uses 15-second HelmRelease reconciliation, 5-second dependency checks, a 30-second maximum retry backoff, and 1-minute chart/HTTP repository refreshes. OCI HelmRepository intervals are unused. Playground clones fetch only the latest commit. Readiness timeouts remain upper bounds; successful waits return immediately. Setup trace lines include elapsed seconds in `/tmp/scenario-setup.log` so remaining delays can be identified.
+
 ## Quickstart scenario
 
 The quickstart installs its infrastructure with Flux and leaves Tenant creation to the learner. It pins Capsule to **0.14.4**, the release used by the quickstart.

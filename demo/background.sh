@@ -36,6 +36,7 @@ setup_exited() {
   fi
 }
 
+PS4='+ [${SECONDS}s] '
 set -x
 trap 'setup_failed "$?" "$LINENO" "$BASH_COMMAND"' ERR
 trap 'setup_exited "$?"' EXIT
@@ -188,7 +189,7 @@ done
 kubectl wait --namespace flux-system --for=condition=ready helmrelease --all --timeout=15m
 
 # Apply Objects (Playground)
-git clone https://github.com/projectcapsule/capsule.git /root/.assets/objects
+git clone --depth 1 https://github.com/projectcapsule/capsule.git /root/.assets/objects
 cd /root/.assets/objects/playground
 make apply-platform
 
@@ -213,7 +214,7 @@ done
 make apply-user
 
 # Apply Resource Permits after Capsule has created the Solar namespaces.
-git clone https://github.com/projectcapsule/resource-permits.git /root/.assets/resource-permits
+git clone --depth 1 https://github.com/projectcapsule/resource-permits.git /root/.assets/resource-permits
 resource_permits_manifests=/root/.assets/resource-permits/playground/manifests
 kubectl apply -k "${resource_permits_manifests}/platform/globalresourcepermittemplates"
 kubectl apply -f "${resource_permits_manifests}/platform/resourcepermittemplates"
@@ -224,7 +225,7 @@ kubectl apply --as alice --as-group projectcapsule.dev \
   -f "${resource_permits_manifests}/user/solar/resourcepermits/temporary-config.yaml"
 
 # Adapt the runnable Change Windows demo to the Flux release identities.
-git clone https://github.com/projectcapsule/change-windows.git /root/.assets/change-windows
+git clone --depth 1 https://github.com/projectcapsule/change-windows.git /root/.assets/change-windows
 kubectl kustomize /root/.assets/change-windows/playground/manifests \
   | sed -e 's/schedule-action-controller-system/capsule-system/g' \
     -e 's/schedule-action-controller-controller-manager/change-windows/g' \
