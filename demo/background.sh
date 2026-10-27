@@ -224,7 +224,7 @@ kubectl apply --as alice --as-group projectcapsule.dev \
 
 # Adapt the runnable Change Windows demo to the Flux release identities.
 git clone --depth 1 https://github.com/projectcapsule/change-windows.git /root/.assets/change-windows
-kubectl kustomize /root/.assets/change-windows/playground/manifests \
+kubectl kustomize /root/.assets/change-windows/playground/manifests/demo \
   | sed -e 's/schedule-action-controller-system/capsule-system/g' \
     -e 's/schedule-action-controller-controller-manager/change-windows/g' \
     -e 's/namespace: kube-system/namespace: capsule-system/g' \
